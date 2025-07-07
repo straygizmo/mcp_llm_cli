@@ -1,9 +1,0 @@
-{
-  "mcpServers": {
-    "llm-server": {
-      "command": "uv",
-      "args": ["run", "-m", "mcp_llm_server.server"],
-      "env": {}
-    }
-  }
-}
