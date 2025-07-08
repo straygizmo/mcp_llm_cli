@@ -17,8 +17,8 @@ This MCP server acts as a bridge between MCP clients and the Claude and Gemini c
 
 ```bash
 # Clone the repository
-git clone https://github.com/straygizmo/mcp-llm-server
-cd mcp-llm-cli
+git clone https://github.com/straygizmo/mcp_llm_cli
+cd mcp_llm_cli
 
 # Install dependencies using uv
 uv sync
@@ -35,7 +35,7 @@ To use this server with an MCP client (like Claude Desktop), add it to your MCP 
   "mcpServers": {
     "llm-server": {
       "command": "uv",
-      "args": ["run", "-m", "mcp_llm_server.server"],
+      "args": ["run", "python", "-m", "mcp_llm_server.server"],
       "cwd": "/path/to/mcp-llm-cli"
     }
   }
