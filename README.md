@@ -36,7 +36,7 @@ To use this server with an MCP client (like Claude Desktop), add it to your MCP 
     "llm-server": {
       "command": "uv",
       "args": ["run", "python", "-m", "mcp_llm_server.server"],
-      "cwd": "/path/to/mcp-llm-cli"
+      "cwd": "/path/to/mcp_llm_cli"
     }
   }
 }
@@ -109,7 +109,7 @@ The server is built using the Model Context Protocol (MCP) framework and consist
 ### Project Structure
 
 ```
-mcp-llm-cli/
+mcp_llm_cli/
 ├── README.md
 ├── pyproject.toml
 ├── uv.lock
