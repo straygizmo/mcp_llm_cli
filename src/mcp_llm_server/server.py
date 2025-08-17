@@ -126,7 +126,7 @@ class LLMServer:
     async def _call_gemini(self, prompt: str) -> str:
         try:
             result = await asyncio.create_subprocess_exec(
-                "gemini-cli",
+                "gemini",
                 stdin=asyncio.subprocess.PIPE,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE
@@ -141,7 +141,7 @@ class LLMServer:
             return stdout.decode().strip()
             
         except FileNotFoundError:
-            return "Error: gemini-cli not found. Please install it first."
+            return "Error: gemini CLI not found. Please install it first."
         except Exception as e:
             return f"Error calling Gemini: {str(e)}"
     
