@@ -103,24 +103,65 @@ class LLMServer:
     
     async def _call_claude(self, prompt: str) -> str:
         try:
-            result = await asyncio.create_subprocess_exec(
-                "claude",
-                stdin=asyncio.subprocess.PIPE,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE
-            )
+            # Resolve the claude executable from PATH. On Windows this picks up
+            # the npm shim (claude.cmd) via PATHEXT; falls back to "claude".
+            import platform
+            import shutil
+
+            claude_cmd = shutil.which("claude") or "claude"
+
+            logger.info(f"Using claude command: {claude_cmd}")
+            logger.info(f"Prompt length: {len(prompt)} characters")
             
-            stdout, stderr = await result.communicate(input=prompt.encode())
+            # Use stdin for prompts to avoid command line length limits
+            # On Windows, we need to use shell=True for .cmd files
+            if platform.system() == "Windows" and claude_cmd.endswith('.cmd'):
+                result = await asyncio.create_subprocess_shell(
+                    f'"{claude_cmd}" --print',
+                    stdin=asyncio.subprocess.PIPE,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE
+                )
+            else:
+                result = await asyncio.create_subprocess_exec(
+                    claude_cmd,
+                    "--print",
+                    stdin=asyncio.subprocess.PIPE,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE
+                )
+            
+            # Send prompt via stdin
+            stdout, stderr = await result.communicate(input=prompt.encode('utf-8'))
             
             if result.returncode != 0:
-                error_msg = stderr.decode() if stderr else "Unknown error"
+                # Try different encodings for Windows
+                try:
+                    error_msg = stderr.decode('utf-8') if stderr else "Unknown error"
+                except UnicodeDecodeError:
+                    error_msg = stderr.decode('cp1252', errors='ignore') if stderr else "Unknown error"
+                logger.error(f"Claude CLI error: {error_msg}")
                 raise Exception(f"Claude CLI error: {error_msg}")
             
-            return stdout.decode().strip()
+            # Try to decode with different encodings
+            try:
+                response_text = stdout.decode('utf-8').strip()
+            except UnicodeDecodeError:
+                # Try Windows default encoding
+                try:
+                    response_text = stdout.decode('cp1252').strip()
+                except UnicodeDecodeError:
+                    # Last resort - ignore errors
+                    response_text = stdout.decode('utf-8', errors='ignore').strip()
+            
+            logger.info(f"Claude response length: {len(response_text)}")
+            return response_text
             
         except FileNotFoundError:
+            logger.error("Claude CLI not found")
             return "Error: claude CLI not found. Please install it first."
         except Exception as e:
+            logger.error(f"Error calling Claude: {str(e)}")
             return f"Error calling Claude: {str(e)}"
     
     async def _call_gemini(self, prompt: str) -> str:
